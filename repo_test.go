@@ -31,6 +31,24 @@ func TestUrlToPath(t *testing.T) {
 	}, {
 		"example.com/foo/bar.git",
 		[]string{"example.com", "foo", "bar"},
+	}, {
+		"git@example.com/foo/bar.git",
+		[]string{"example.com", "foo", "bar"},
+	}, {
+		"git@example.com:foo/bar.git",
+		[]string{"example.com", "foo", "bar"},
+	}, {
+		"git:p4ssw0rd@example.com/foo/bar.git",
+		[]string{"example.com", "foo", "bar"},
+	}, {
+		"git@example.com:foo?bar=baz",
+		[]string{"example.com", "foo"},
+	}, {
+		"git://git@example.com/foo?bar=baz",
+		[]string{"example.com", "foo"},
+	}, {
+		"https://git:p4ssw0rd@example.com/foo/bar.git?biz=baz",
+		[]string{"example.com", "foo", "bar"},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.url, func(t *testing.T) {

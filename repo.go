@@ -81,6 +81,11 @@ func run() error {
 
 func urlToPath(rawurl string) (path []string, err error) {
 	var repo *url.URL
+	if _, rest, ok := strings.Cut(rawurl, "@"); ok {
+		rawurl = rest
+		rawurl = strings.Replace(rawurl, ":", "/", 1)
+	}
+
 	if repo, err = url.Parse(rawurl); err != nil {
 		return
 	}
@@ -89,9 +94,6 @@ func urlToPath(rawurl string) (path []string, err error) {
 	}
 
 	rawpath := repo.Path
-	if _, rest, ok := strings.Cut(rawpath, "@"); ok {
-		rawpath = rest
-	}
 	if rest, ok := strings.CutSuffix(rawpath, ".git"); ok {
 		rawpath = rest
 	}
