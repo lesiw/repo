@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"net/url"
 	"os"
@@ -10,6 +11,9 @@ import (
 )
 
 var repodir = "."
+
+//go:embed version.txt
+var versionfile string
 
 const usage = "usage: repo URL"
 
@@ -25,6 +29,8 @@ func run() error {
 
 	if len(os.Args) < 2 {
 		return fmt.Errorf(usage)
+	} else if os.Args[1] == "-V" {
+		return fmt.Errorf(strings.TrimSpace(versionfile))
 	}
 	rawurl := os.Args[1]
 	parts, err := urlToPath(rawurl)
