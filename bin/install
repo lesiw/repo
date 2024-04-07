@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -e
+
+pb ci
+CGO_ENABLED=0 go install ./...

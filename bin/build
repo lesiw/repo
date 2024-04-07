@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+
+[ -z "$PBCTRID" ] && PBCTR=./etc/Dockerfile.dev exec pb "$(basename "$0")"
+
+pb clean
+pb ci
+
+export CGO_ENABLED=0
+
+mkdir -p out
+
+while IFS=':' read -r GOOS GOARCH UNAMES UNAMER
+do
+    echo "Building $GOOS/$GOARCH"
+    export GOOS GOARCH
+    go build -ldflags="-s -w" -o "out/repo-$UNAMES-$UNAMER" .
+    if [ ! -f "out/repo-$GOOS-$GOARCH" ] || [ -L "out/repo-$GOOS-$GOARCH" ]
+    then
+        rm -f "out/repo-$GOOS-$GOARCH"
+        ln -s "repo-$UNAMES-$UNAMER" "out/repo-$GOOS-$GOARCH"
+    fi
+done < etc/platforms
