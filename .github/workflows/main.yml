@@ -1,4 +1,4 @@
-name: repo
+name: main
 on: [push]
 jobs:
   pb:
