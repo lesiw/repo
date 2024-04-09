@@ -2,24 +2,28 @@ package main
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"lesiw.io/flag"
 )
 
 var repodir = "."
+var parseErr = errors.New("parse error")
 
 //go:embed version.txt
 var versionfile string
 
-const usage = "usage: repo URL"
-
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		if !errors.Is(err, parseErr) {
+			fmt.Fprintln(os.Stderr, err.Error())
+		}
 		os.Exit(1)
 	}
 }
@@ -27,11 +31,20 @@ func main() {
 func run() error {
 	defer func() { fmt.Println(repodir) }()
 
-	if len(os.Args) < 2 {
-		return fmt.Errorf(usage)
-	} else if os.Args[1] == "-V" {
+	flags := flag.NewFlagSet(os.Stderr, "repo")
+	flags.Usage = "Usage: repo URL"
+	version := flags.Bool("V,version", "print version and exit")
+	if err := flags.Parse(os.Args...); err != nil {
+		return parseErr
+	}
+	if len(flags.Args) == 0 {
+		flags.PrintError("no URL given")
+		return parseErr
+	}
+	if *version {
 		return fmt.Errorf(strings.TrimSpace(versionfile))
 	}
+
 	rawurl := os.Args[1]
 	parts, err := urlToPath(rawurl)
 	if err != nil {
