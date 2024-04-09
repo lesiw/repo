@@ -5,7 +5,11 @@ jobs:
   pb:
     runs-on: ubuntu-latest
     steps:
+      - name: Install packages
+        run: apt update && apt install -y curl
       - name: Check out repository code
         uses: actions/checkout@v4
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v3
       - name: Run pb
         run: '"$(curl -L lesiw.io/pb | sh)"'
