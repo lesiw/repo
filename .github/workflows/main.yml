@@ -1,6 +1,5 @@
 name: repo
-run-name: pb
-on: [push, pull_request]
+on: [push]
 jobs:
   pb:
     runs-on: ubuntu-latest
