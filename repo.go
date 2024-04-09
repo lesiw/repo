@@ -34,7 +34,8 @@ func run() error {
 	flags := flag.NewFlagSet(os.Stderr, "repo")
 	flags.Usage = "Usage: repo URL"
 	version := flags.Bool("V,version", "print version and exit")
-	if err := flags.Parse(os.Args...); err != nil {
+	force := flags.Bool("f,force", "delete and re-clone repository")
+	if err := flags.Parse(os.Args[1:]...); err != nil {
 		return parseErr
 	}
 	if len(flags.Args) == 0 {
@@ -45,7 +46,7 @@ func run() error {
 		return fmt.Errorf(strings.TrimSpace(versionfile))
 	}
 
-	rawurl := os.Args[1]
+	rawurl := flags.Args[0]
 	parts, err := urlToPath(rawurl)
 	if err != nil {
 		return err
@@ -67,8 +68,15 @@ func run() error {
 		if !info.IsDir() {
 			return fmt.Errorf("'%s' exists and is not a directory", err)
 		}
-		repodir = fullpath
-		return nil
+		if *force {
+			if err := os.RemoveAll(fullpath); err != nil {
+				return fmt.Errorf("could not remove directory '%s': %s",
+					fullpath, err)
+			}
+		} else {
+			repodir = fullpath
+			return nil
+		}
 	}
 
 	tmpdir, err := os.MkdirTemp("", "repo.*")
