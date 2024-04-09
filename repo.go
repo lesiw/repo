@@ -14,14 +14,14 @@ import (
 )
 
 var repodir = "."
-var parseErr = errors.New("parse error")
+var errParse = errors.New("parse error")
 
 //go:embed version.txt
 var versionfile string
 
 func main() {
 	if err := run(); err != nil {
-		if !errors.Is(err, parseErr) {
+		if !errors.Is(err, errParse) {
 			fmt.Fprintln(os.Stderr, err.Error())
 		}
 		os.Exit(1)
@@ -36,11 +36,11 @@ func run() error {
 	version := flags.Bool("V,version", "print version and exit")
 	force := flags.Bool("f,force", "delete and re-clone repository")
 	if err := flags.Parse(os.Args[1:]...); err != nil {
-		return parseErr
+		return errParse
 	}
 	if len(flags.Args) == 0 {
 		flags.PrintError("no URL given")
-		return parseErr
+		return errParse
 	}
 	if *version {
 		return fmt.Errorf(strings.TrimSpace(versionfile))
