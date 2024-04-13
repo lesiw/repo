@@ -79,23 +79,15 @@ func run() error {
 		}
 	}
 
-	tmpdir, err := os.MkdirTemp("", "repo.*")
+	newdirs, err := MkdirAll(dirpath, 0755)
 	if err != nil {
-		return fmt.Errorf("could not make temp directory: %s", err)
-	}
-	defer os.RemoveAll(tmpdir)
-	if err := cloneRepo(rawurl, tmpdir); err != nil {
-		return fmt.Errorf("could not clone repository: %s", err)
-	}
-
-	if err := os.MkdirAll(dirpath, 0755); err != nil {
 		return fmt.Errorf("could not create repo directory: %s", err)
 	}
-	if err := os.Rename(tmpdir, fullpath); err != nil {
-		return fmt.Errorf("could not move cloned repository to '%s': %s",
-			fullpath, err)
-	}
+	defer func() { rmDirs(newdirs) }()
 
+	if err := cloneRepo(rawurl, fullpath); err != nil {
+		return fmt.Errorf("could not clone repository: %s", err)
+	}
 	repodir = fullpath
 	return nil
 }
@@ -136,4 +128,10 @@ func cloneRepo(loc string, path string) error {
 	cmd.Stdout = os.Stderr // Stdout should only ever contain repodir.
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func rmDirs(dirs []string) {
+	for i := len(dirs) - 1; i >= 0; i-- {
+		_ = os.Remove(dirs[i])
+	}
 }
