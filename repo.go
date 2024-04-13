@@ -48,12 +48,12 @@ func run() error {
 	if err := flags.Parse(os.Args[1:]...); err != nil {
 		return errParse
 	}
+	if *version {
+		return fmt.Errorf(strings.TrimSpace(versionfile))
+	}
 	if len(flags.Args) == 0 {
 		flags.PrintError("no URL given")
 		return errParse
-	}
-	if *version {
-		return fmt.Errorf(strings.TrimSpace(versionfile))
 	}
 
 	rawurl := flags.Args[0]
