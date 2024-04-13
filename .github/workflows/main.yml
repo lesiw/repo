@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install packages
-        run: apt update && apt install -y curl
+        run: sudo apt update && sudo apt install -y curl
       - name: Check out repository code
         uses: actions/checkout@v4
       - name: Setup Docker
