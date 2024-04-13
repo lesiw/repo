@@ -11,4 +11,4 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
       - name: Run pb
-        run: '"$(curl -L lesiw.io/pb | sh)"'
+        run: '"$(curl -L lesiw.io/pb | sh)" -v'
