@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
 
@@ -15,11 +16,19 @@ import (
 
 var repodir = "."
 var errParse = errors.New("parse error")
+var defers deferlist
 
 //go:embed version.txt
 var versionfile string
 
 func main() {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+	go func() {
+		<-sig
+		defers.run()
+		os.Exit(1)
+	}()
 	if err := run(); err != nil {
 		if !errors.Is(err, errParse) {
 			fmt.Fprintln(os.Stderr, err.Error())
@@ -29,7 +38,8 @@ func main() {
 }
 
 func run() error {
-	defer func() { fmt.Println(repodir) }()
+	defer defers.run()
+	defers.add(func() { fmt.Println(repodir) })
 
 	flags := flag.NewFlagSet(os.Stderr, "repo")
 	flags.Usage = "Usage: repo URL"
@@ -83,7 +93,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("could not create repo directory: %s", err)
 	}
-	defer func() { rmDirs(newdirs) }()
+	defers.add(func() { rmDirs(newdirs) })
 
 	if err := cloneRepo(rawurl, fullpath); err != nil {
 		return fmt.Errorf("could not clone repository: %s", err)
@@ -127,6 +137,7 @@ func cloneRepo(loc string, path string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stderr // Stdout should only ever contain repodir.
 	cmd.Stderr = os.Stderr
+	defers.add(func() { _ = cmd.Wait() })
 	return cmd.Run()
 }
 
