@@ -18,6 +18,12 @@ var repodir = "."
 var errParse = errors.New("parse error")
 var defers deferlist
 
+var (
+	flags   = flag.NewSet(os.Stderr, "repo URL")
+	version = flags.Bool("V,version", "print version and exit")
+	force   = flags.Bool("f,force", "delete and re-clone repository")
+)
+
 //go:embed version.txt
 var versionfile string
 
@@ -41,10 +47,6 @@ func run() error {
 	defer defers.run()
 	defers.add(func() { fmt.Println(repodir) })
 
-	flags := flag.NewFlagSet(os.Stderr, "repo")
-	flags.Usage = "Usage: repo URL"
-	version := flags.Bool("V,version", "print version and exit")
-	force := flags.Bool("f,force", "delete and re-clone repository")
 	if err := flags.Parse(os.Args[1:]...); err != nil {
 		return errParse
 	}
