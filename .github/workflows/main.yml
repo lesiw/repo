@@ -1,14 +1,12 @@
 name: main
 on: [push]
 jobs:
-  pb:
+  run:
     runs-on: ubuntu-latest
     steps:
-      - name: Install packages
-        run: sudo apt update && sudo apt install -y curl
       - name: Check out repository code
         uses: actions/checkout@v4
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
-      - name: Run pb
-        run: 'PBCTRDEBUG=1 "$(curl -L lesiw.io/pb | sh)" -v'
+      - name: Run
+        run: '"$(wget -O- lesiw.io/run | sh)" -v'

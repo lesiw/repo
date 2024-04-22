@@ -2,6 +2,6 @@
 
 set -e
 
-pb build
+run build
 
 find out/ -type l -exec rm -f {} \;

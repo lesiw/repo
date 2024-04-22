@@ -2,10 +2,10 @@
 
 set -e
 
-[ -z "$PBCTRID" ] && PBCTR=./etc/Dockerfile.dev exec pb "$(basename "$0")"
+[ -z "$RUNCTRID" ] && RUNCTR=./etc/Dockerfile.dev exec run "$(basename "$0")"
 
-pb clean
-pb ci
+run clean
+run ci
 
 export CGO_ENABLED=0
 
