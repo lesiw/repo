@@ -7,16 +7,15 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"strings"
 
+	"lesiw.io/defers"
 	"lesiw.io/flag"
 )
 
 var repodir = "."
 var errParse = errors.New("parse error")
-var defers deferlist
 
 var (
 	flags   = flag.NewSet(os.Stderr, "repo URL")
@@ -28,24 +27,17 @@ var (
 var versionfile string
 
 func main() {
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt)
-	go func() {
-		<-sig
-		defers.run()
-		os.Exit(1)
-	}()
 	if err := run(); err != nil {
 		if !errors.Is(err, errParse) {
 			fmt.Fprintln(os.Stderr, err.Error())
 		}
-		os.Exit(1)
+		defers.Exit(1)
 	}
+	defers.Exit(0)
 }
 
 func run() error {
-	defer defers.run()
-	defers.add(func() { fmt.Println(repodir) })
+	defers.Add(func() { fmt.Println(repodir) })
 
 	if err := flags.Parse(os.Args[1:]...); err != nil {
 		return errParse
@@ -95,7 +87,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("could not create repo directory: %s", err)
 	}
-	defers.add(func() { rmDirs(newdirs) })
+	defers.Add(func() { rmDirs(newdirs) })
 
 	if err := cloneRepo(rawurl, fullpath); err != nil {
 		return fmt.Errorf("could not clone repository: %s", err)
@@ -139,7 +131,7 @@ func cloneRepo(loc string, path string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stderr // Stdout should only ever contain repodir.
 	cmd.Stderr = os.Stderr
-	defers.add(func() { _ = cmd.Wait() })
+	defers.Add(func() { _ = cmd.Wait() })
 	return cmd.Run()
 }
 
