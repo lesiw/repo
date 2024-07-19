@@ -4,7 +4,8 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"net/url"
+	"net/http"
+	neturl "net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -50,8 +51,8 @@ func run() error {
 		return errParse
 	}
 
-	rawurl := flags.Args[0]
-	parts, err := urlToPath(rawurl)
+	url := flags.Args[0]
+	parts, err := urlToPath(url)
 	if err != nil {
 		return err
 	}
@@ -89,21 +90,35 @@ func run() error {
 	}
 	defers.Add(func() { rmDirs(newdirs) })
 
-	if err := cloneRepo(rawurl, fullpath); err != nil {
+	if err := cloneRepo(url, fullpath); err != nil {
 		return fmt.Errorf("could not clone repository: %s", err)
 	}
 	repodir = fullpath
 	return nil
 }
 
-func urlToPath(rawurl string) (path []string, err error) {
-	var repo *url.URL
-	if _, rest, ok := strings.Cut(rawurl, "@"); ok {
-		rawurl = rest
-		rawurl = strings.Replace(rawurl, ":", "/", 1)
+func splitUrl(url string) (prefix, path string) {
+	var ok bool
+	if prefix, path, ok = strings.Cut(url, "@"); ok {
+		prefix = prefix + "@"
+		path = strings.Replace(path, ":", "/", 1)
+		return
 	}
+	return "", url
+}
 
-	if repo, err = url.Parse(rawurl); err != nil {
+func mergeUrl(prefix, path string) string {
+	if strings.Contains(prefix, "@") {
+		path = strings.Replace(path, "/", ":", 1)
+	}
+	return prefix + path
+}
+
+func urlToPath(url string) (path []string, err error) {
+	var repo *neturl.URL
+	_, url = splitUrl(url)
+
+	if repo, err = neturl.Parse(url); err != nil {
 		return
 	}
 	if repo.Hostname() != "" {
@@ -121,18 +136,32 @@ func urlToPath(rawurl string) (path []string, err error) {
 		}
 	}
 	if len(path) < 1 {
-		err = fmt.Errorf("failed to derive path from url: %s", rawurl)
+		err = fmt.Errorf("failed to derive path from url: %s", url)
 	}
 	return
 }
 
-func cloneRepo(loc string, path string) error {
+func cloneRepo(loc, path string) error {
+	loc = followRedirects(loc)
 	cmd := exec.Command("git", "clone", loc, path)
 	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stderr // Stdout should only ever contain repodir.
+	cmd.Stdout = os.Stderr // Stdout must only contain repodir.
 	cmd.Stderr = os.Stderr
 	defers.Add(func() { _ = cmd.Wait() })
 	return cmd.Run()
+}
+
+func followRedirects(url string) (ret string) {
+	prefix, path := splitUrl(url)
+	defer func() { ret = mergeUrl(prefix, path) }()
+	resp, err := new(http.Client).Get("https://" + path)
+	if err != nil {
+		return
+	}
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		path = resp.Request.URL.Host + resp.Request.URL.Path
+	}
+	return
 }
 
 func rmDirs(dirs []string) {
