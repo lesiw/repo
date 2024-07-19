@@ -97,39 +97,42 @@ func run() error {
 	return nil
 }
 
-func splitUrl(url string) (prefix, path string) {
+func splitUrl(url string) (prefix, path, suffix string) {
 	var ok bool
 	if prefix, path, ok = strings.Cut(url, "@"); ok {
 		prefix = prefix + "@"
 		path = strings.Replace(path, ":", "/", 1)
+	} else {
+		path = prefix
+		prefix = ""
+	}
+	parsed, err := neturl.Parse(path)
+	if err != nil {
 		return
 	}
-	return "", url
+	if prefix == "" && parsed.Scheme != "" {
+		prefix = parsed.Scheme + "://"
+	}
+	if path, ok = strings.CutSuffix(parsed.Host+parsed.Path, ".git"); ok {
+		suffix += ".git"
+	}
+	if parsed.RawQuery != "" {
+		suffix += "?" + parsed.RawQuery
+	}
+	return
 }
 
-func mergeUrl(prefix, path string) string {
-	if strings.Contains(prefix, "@") {
+func mergeUrl(prefix, path, suffix string) string {
+	if strings.Contains(prefix, "@") && !strings.Contains(prefix, "://") {
 		path = strings.Replace(path, "/", ":", 1)
+	} else if prefix == "" {
+		prefix = "https://"
 	}
-	return prefix + path
+	return prefix + path + suffix
 }
 
 func urlToPath(url string) (path []string, err error) {
-	var repo *neturl.URL
-	_, url = splitUrl(url)
-
-	if repo, err = neturl.Parse(url); err != nil {
-		return
-	}
-	if repo.Hostname() != "" {
-		path = append(path, repo.Hostname())
-	}
-
-	rawpath := repo.Path
-	if rest, ok := strings.CutSuffix(rawpath, ".git"); ok {
-		rawpath = rest
-	}
-
+	_, rawpath, _ := splitUrl(url)
 	for _, p := range strings.Split(rawpath, "/") {
 		if p != "" {
 			path = append(path, p)
@@ -152,8 +155,8 @@ func cloneRepo(loc, path string) error {
 }
 
 func followRedirects(url string) (ret string) {
-	prefix, path := splitUrl(url)
-	defer func() { ret = mergeUrl(prefix, path) }()
+	prefix, path, suffix := splitUrl(url)
+	defer func() { ret = mergeUrl(prefix, path, suffix) }()
 	resp, err := new(http.Client).Get("https://" + path)
 	if err != nil {
 		return
