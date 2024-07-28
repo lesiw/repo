@@ -168,7 +168,14 @@ func followRedirects(url string) (ret string) {
 		return
 	}
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		path = resp.Request.URL.Host + resp.Request.URL.Path
+		// Don't update the path if we ended up on the same domain.
+		// It's likely to be a login page for a private git server.
+		// Most git hosts will automatically handle moved repositories when
+		// they are cloned, so ignoring valid redirects here should be safe.
+		host, _, _ := strings.Cut(path, "/")
+		if host != resp.Request.URL.Host {
+			path = resp.Request.URL.Host + resp.Request.URL.Path
+		}
 	}
 	return
 }
