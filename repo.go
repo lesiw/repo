@@ -146,11 +146,17 @@ func urlToPath(url string) (path []string, err error) {
 
 func cloneRepo(loc, path string) error {
 	loc = followRedirects(loc)
+
 	cmd := exec.Command("git", "clone", loc, path)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stderr // Stdout must only contain repodir.
 	cmd.Stderr = os.Stderr
+
 	defers.Add(func() { _ = cmd.Wait() })
+
+	if os.Getenv("REPOVERBOSE") == "1" {
+		fmt.Fprintf(os.Stderr, "%q\n", cmd.Args)
+	}
 	return cmd.Run()
 }
 
