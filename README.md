@@ -12,7 +12,7 @@ Set `repo`'s prefix using `REPOPREFIX` (default `$HOME/.local/src`).
 ### curl
 
 ```sh
-curl -L lesiw.io/repo | sh
+curl lesiw.io/repo | sh
 ```
 
 ### go install

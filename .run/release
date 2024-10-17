@@ -1,7 +1,0 @@
-#!/bin/sh
-
-set -e
-
-run build
-
-find out/ -type l -exec rm -f {} \;

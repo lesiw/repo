@@ -1,6 +1,0 @@
-#!/bin/sh
-
-set -e
-
-run ci
-CGO_ENABLED=0 go install ./...
