@@ -86,7 +86,7 @@ func mergeUrl(prefix, path, suffix string) string {
 
 func urlToPath(url string) (path []string, err error) {
 	_, rawpath, _ := splitUrl(url)
-	for _, p := range strings.Split(rawpath, "/") {
+	for p := range strings.SplitSeq(rawpath, "/") {
 		if p != "" {
 			path = append(path, p)
 		}
