@@ -3,7 +3,7 @@ module test/ops
 go 1.24.7
 
 require (
-	labs.lesiw.io/ops v0.0.0-20260218010754-5f95332fb13e
+	labs.lesiw.io/ops v0.0.0-20260218014211-4fbc54d14da7
 	lesiw.io/ops v0.15.0
 )
 
